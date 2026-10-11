@@ -15,6 +15,18 @@ export async function copiarImagenAPins(origen: string, id: string): Promise<str
   await FileSystem.copyAsync({ from: origen, to: destino });
   return destino;
 }
+export async function copiarAvatar(origen: string, usuarioId: string): Promise<string> {
+  await asegurarDirectorio();
+  const destino = `${DIR}avatar-${usuarioId}.jpg`;
+  try {
+    const info = await FileSystem.getInfoAsync(destino);
+    if (info.exists) await FileSystem.deleteAsync(destino, { idempotent: true });
+  } catch {
+    // silencioso
+  }
+  await FileSystem.copyAsync({ from: origen, to: destino });
+  return destino;
+}
 
 export async function borrarImagen(uri: string): Promise<void> {
   if (!uri || uri.startsWith('seed:')) return;

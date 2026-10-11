@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -39,6 +40,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
     setErrorPassword(ePassword);
     if (eEmail || ePassword) return;
 
+    Keyboard.dismiss();
     setCargando(true);
     const r = await login(email, password);
     setCargando(false);
@@ -49,7 +51,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
     <SafeAreaView style={estilos.contenedor} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <ScrollView
           contentContainerStyle={estilos.scroll}
@@ -74,7 +76,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
                 if (errorEmail) setErrorEmail(null);
                 if (errorGeneral) setErrorGeneral(null);
               }}
-              keyboardType="email-address"
+              keyboardType="default"
               autoCapitalize="none"
               error={errorEmail}
             />

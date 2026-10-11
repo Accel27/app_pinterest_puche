@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -61,6 +62,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
 
     if (eNombre || eEmail || ePassword || eConfirmacion) return;
 
+    Keyboard.dismiss();
     setCargando(true);
     const r = await registrar(nombre, email, password);
     setCargando(false);
@@ -74,7 +76,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
     <SafeAreaView style={estilos.contenedor} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <ScrollView
           contentContainerStyle={estilos.scroll}
@@ -117,7 +119,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
                 setEmail(t);
                 if (errores.email) limpiarError('email');
               }}
-              keyboardType="email-address"
+              keyboardType="default"
               error={errores.email}
             />
 
@@ -160,7 +162,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
             />
 
             <Text style={estilos.terminos}>
-              Al crear una cuenta aceptas los términos y condiciones de uso..
+              Al crear una cuenta aceptas los términos y condiciones de uso.
             </Text>
           </View>
         </ScrollView>

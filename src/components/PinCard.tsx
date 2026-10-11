@@ -29,7 +29,10 @@ export default function PinCard({ pin, ancho, onPress }: Props) {
   const estilos = crearEstilos(tema);
   const { usuarioActual, toggleLike, usuarios } = useApp();
 
-  const aspectRatio = useMemo(() => aspectRatioDesdeId(pin.id), [pin.id]);
+  const aspectRatio = useMemo(
+  () => pin.aspectRatio ?? aspectRatioDesdeId(pin.id),
+  [pin.aspectRatio, pin.id]
+  );
   const alto = ancho / aspectRatio;
   const fuente = useMemo(() => fuenteImagen(pin.imagen), [pin.imagen]);
   const likeado = usuarioActual ? pin.likes.includes(usuarioActual.id) : false;

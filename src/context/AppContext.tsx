@@ -22,7 +22,7 @@ import { Tema, crearTema } from '../theme/tema';
 import { KEYS, escribir, leer } from '../storage/db';
 import { generarId } from '../utils/id';
 import { hashPassword } from '../utils/crypto';
-import { borrarImagen, copiarImagenAPins } from '../storage/imagenes';
+import { borrarImagen, copiarAvatar, copiarImagenAPins } from '../storage/imagenes';
 import { generarPinesSeed } from '../storage/seed';
 
 const CONFIG_DEFAULT: Configuracion = {
@@ -52,12 +52,14 @@ interface ContextoApp {
   login: (email: string, password: string) => Promise<ResultadoAuth>;
   logout: () => Promise<void>;
 
-  crearPin: (datos: {
+    crearPin: (datos: {
     titulo: string;
     descripcion: string;
     categoria: Categoria;
     tableroId: string | null;
     imagenTemporal: string;
+    anchoImagen: number;
+    altoImagen: number;
   }) => Promise<Pin | null>;
   eliminarPin: (pinId: string) => Promise<void>;
   toggleLike: (pinId: string) => Promise<void>;
@@ -75,10 +77,10 @@ interface ContextoApp {
   setColorPrincipal: (color: string) => Promise<void>;
 
   editarPerfil: (datos: {
-    passwordActual: string;
-    nombreUsuario?: string;
-    avatar?: string | null;
-    passwordNueva?: string;
+  passwordActual: string;
+  nombreUsuario?: string;
+  avatarTempUri?: string | null;
+  passwordNueva?: string;
   }) => Promise<ResultadoAuth>;
 }
 
@@ -121,11 +123,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ]);
 
       let pinsFinales = p;
-      if (!seedAplicado) {
-        pinsFinales = [...generarPinesSeed(), ...p];
+        if (!seedAplicado) {
+        // Quitamos cualquier seed anterior antes de reinsertar los nuevos.
+        // Esto evita duplicados cuando cambiamos la definicion del seed.
+        const sinSeedsViejos = p.filter((pin) => !pin.esSeed);
+        pinsFinales = [...generarPinesSeed(), ...sinSeedsViejos];
         await escribir(KEYS.pins, pinsFinales);
         await escribir(KEYS.seedAplicado, true);
-      }
+        }
 
       setUsuarios(u);
       setPins(pinsFinales);
@@ -223,11 +228,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [configuracion, guardarConfiguracion]);
 
   // ---- PINS ----
-  const crearPin = useCallback<ContextoApp['crearPin']>(
-    async ({ titulo, descripcion, categoria, tableroId, imagenTemporal }) => {
+    const crearPin = useCallback<ContextoApp['crearPin']>(
+    async ({
+      titulo,
+      descripcion,
+      categoria,
+      tableroId,
+      imagenTemporal,
+      anchoImagen,
+      altoImagen,
+    }) => {
       if (!usuarioActual) return null;
       const id = generarId();
       const rutaFinal = await copiarImagenAPins(imagenTemporal, id);
+      const aspectRatio = anchoImagen > 0 && altoImagen > 0
+        ? anchoImagen / altoImagen
+        : 0.75;
       const nuevo: Pin = {
         id,
         titulo: titulo.trim(),
@@ -239,6 +255,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         tableroId,
         likes: [],
         creadoEn: Date.now(),
+        aspectRatio,
       };
       await guardarPins([nuevo, ...pins]);
       return nuevo;
@@ -402,21 +419,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   // ---- PERFIL ----
-  const editarPerfil = useCallback<ContextoApp['editarPerfil']>(
-    async ({ passwordActual, nombreUsuario, avatar, passwordNueva }) => {
+      const editarPerfil = useCallback<ContextoApp['editarPerfil']>(
+    async ({ passwordActual, nombreUsuario, avatarTempUri, passwordNueva }) => {
       if (!usuarioActual) return { ok: false, error: 'No hay sesión activa' };
-      const hashActual = await hashPassword(passwordActual);
-      if (hashActual !== usuarioActual.passwordHash) {
-        return { ok: false, error: 'La contraseña actual no coincide' };
+
+      // Solo se valida la contraseña actual si el usuario va a cambiarla.
+      if (passwordNueva) {
+        const hashActual = await hashPassword(passwordActual);
+        if (hashActual !== usuarioActual.passwordHash) {
+          return { ok: false, error: 'La contraseña actual no coincide' };
+        }
       }
+
+      let avatarFinal = usuarioActual.avatar;
+      if (avatarTempUri === null) {
+        avatarFinal = null;
+      } else if (avatarTempUri) {
+        avatarFinal = await copiarAvatar(avatarTempUri, usuarioActual.id);
+      }
+
       const actualizado: Usuario = {
         ...usuarioActual,
         nombreUsuario: nombreUsuario?.trim() || usuarioActual.nombreUsuario,
-        avatar: avatar !== undefined ? avatar : usuarioActual.avatar,
+        avatar: avatarFinal,
         passwordHash: passwordNueva
           ? await hashPassword(passwordNueva)
           : usuarioActual.passwordHash,
       };
+
       await guardarUsuarios(
         usuarios.map((u) => (u.id === actualizado.id ? actualizado : u))
       );

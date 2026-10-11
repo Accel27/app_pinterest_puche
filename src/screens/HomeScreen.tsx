@@ -130,7 +130,20 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
           ) : null
         }
       />
+            <Pressable
+        onPress={() => navigation.navigate('AddPin')}
+        style={[
+          estilos.fab,
+          {
+            backgroundColor: tema.primario,
+            shadowColor: '#000',
+          },
+        ]}
+      >
+        <Ionicons name="add" size={30} color={tema.textoInverso} />
+      </Pressable>
     </SafeAreaView>
+    
   );
 }
 
@@ -192,5 +205,21 @@ function crearEstilos(tema: Tema) {
     },
     botonLimpiar: { marginTop: 12, padding: 10 },
     botonLimpiarTexto: { fontSize: 14, fontWeight: '700' },
+
+    fab: {
+      position: 'absolute',
+      bottom: 24,
+      right: 20,
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      alignItems: 'center',
+      justifyContent: 'center',
+      elevation: 6,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+    },
+
   });
 }

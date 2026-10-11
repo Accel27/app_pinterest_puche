@@ -7,16 +7,23 @@ import { Tema } from '../theme/tema';
 interface Props {
   seleccionada: Categoria | null;
   onSeleccionar: (categoria: Categoria | null) => void;
+  incluirTodas?: boolean;
 }
 
-export default function ChipsCategorias({ seleccionada, onSeleccionar }: Props) {
+export default function ChipsCategorias({
+  seleccionada,
+  onSeleccionar,
+  incluirTodas = true,
+}: Props) {
   const tema = useTema();
   const estilos = crearEstilos(tema);
 
-  const opciones: { valor: Categoria | null; etiqueta: string }[] = [
-    { valor: null, etiqueta: 'Todas' },
-    ...CATEGORIAS.map((c) => ({ valor: c, etiqueta: ETIQUETA_CATEGORIA[c] })),
-  ];
+  const opciones: { valor: Categoria | null; etiqueta: string }[] = incluirTodas
+    ? [
+        { valor: null, etiqueta: 'Todas' },
+        ...CATEGORIAS.map((c) => ({ valor: c, etiqueta: ETIQUETA_CATEGORIA[c] })),
+      ]
+    : CATEGORIAS.map((c) => ({ valor: c, etiqueta: ETIQUETA_CATEGORIA[c] }));
 
   return (
     <ScrollView
@@ -52,17 +59,14 @@ export default function ChipsCategorias({ seleccionada, onSeleccionar }: Props) 
 
 function crearEstilos(tema: Tema) {
   return StyleSheet.create({
-    contenedor: {
-      paddingVertical: 4,
-      gap: 8,
-    },
+    contenedor: { paddingVertical: 4, gap: 8 },
     chip: {
       paddingHorizontal: 16,
       paddingVertical: 9,
       borderRadius: 20,
       marginRight: 8,
     },
-    chipActivo: { backgroundColor: tema.texto },
+    chipActivo: { backgroundColor: tema.primario },
     chipInactivo: { backgroundColor: tema.superficie },
     chipTexto: { fontSize: 13, fontWeight: '600' },
   });

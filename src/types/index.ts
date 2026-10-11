@@ -32,6 +32,7 @@ export interface Pin {
   tableroId: string | null;
   likes: string[];
   creadoEn: number;
+  aspectRatio?: number;
 }
 
 export interface Tablero {

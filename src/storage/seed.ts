@@ -55,15 +55,16 @@ export function generarPinesSeed(): Pin[] {
     descripcion: string;
     categoria: Categoria;
     imagen: string;
+    aspectRatio: number;
   }[] = [
-    { titulo: 'Retrato anime', descripcion: 'Ilustración de personaje anime', categoria: 'Anime', imagen: 'seed:pin1' },
-    { titulo: 'Personaje violeta', descripcion: 'Fan art con detalles morados', categoria: 'Anime', imagen: 'seed:pin2' },
-    { titulo: 'Playa al atardecer', descripcion: 'Vista del mar al atardecer', categoria: 'Viajes', imagen: 'seed:pin3' },
-    { titulo: 'Outfit casual', descripcion: 'Combinación urbana de temporada', categoria: 'Moda', imagen: 'seed:pin4' },
-    { titulo: 'Setup gamer', descripcion: 'Escritorio con luces LED', categoria: 'Gaming', imagen: 'seed:pin5' },
-    { titulo: 'Build de personaje', descripcion: 'Stats y armas para el endgame', categoria: 'Gaming', imagen: 'seed:pin6' },
-    { titulo: 'Concierto en vivo', descripcion: 'Banda tocando en un estadio', categoria: 'Musica', imagen: 'seed:pin7' },
-    { titulo: 'Bosque nevado', descripcion: 'Paisaje natural con nieve', categoria: 'Naturaleza', imagen: 'seed:pin8' },
+    { titulo: 'Retrato anime', descripcion: 'Ilustración de personaje anime', categoria: 'Anime', imagen: 'seed:pin1', aspectRatio: 0.6 },
+    { titulo: 'Personaje violeta', descripcion: 'Fan art con detalles morados', categoria: 'Anime', imagen: 'seed:pin2', aspectRatio: 0.7 },
+    { titulo: 'Playa al atardecer', descripcion: 'Vista del mar al atardecer', categoria: 'Viajes', imagen: 'seed:pin3', aspectRatio: 1.15 },
+    { titulo: 'Outfit casual', descripcion: 'Combinación urbana de temporada', categoria: 'Moda', imagen: 'seed:pin4', aspectRatio: 0.75 },
+    { titulo: 'Setup gamer', descripcion: 'Escritorio con luces LED', categoria: 'Gaming', imagen: 'seed:pin5', aspectRatio: 1.0 },
+    { titulo: 'Build de personaje', descripcion: 'Stats y armas para el endgame', categoria: 'Gaming', imagen: 'seed:pin6', aspectRatio: 0.85 },
+    { titulo: 'Concierto en vivo', descripcion: 'Banda tocando en un estadio', categoria: 'Musica', imagen: 'seed:pin7', aspectRatio: 1.1 },
+    { titulo: 'Bosque nevado', descripcion: 'Paisaje natural con nieve', categoria: 'Naturaleza', imagen: 'seed:pin8', aspectRatio: 0.65 },
   ];
 
   return datos.map((d, i) => ({
@@ -77,5 +78,6 @@ export function generarPinesSeed(): Pin[] {
     tableroId: null,
     likes: [],
     creadoEn: ahora - (8 - i) * 1000,
+    aspectRatio: d.aspectRatio,
   }));
 }

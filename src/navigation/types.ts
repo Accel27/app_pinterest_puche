@@ -13,6 +13,8 @@ export type AppStackParamList = {
   AddPin: { tableroIdInicial?: string | null } | undefined;
   CreateBoard: undefined;
   Notificaciones: undefined;
+  EditarPerfil: undefined;
+  TableroDetail: { tableroId: string };
 };
 
 export type TabParamList = {

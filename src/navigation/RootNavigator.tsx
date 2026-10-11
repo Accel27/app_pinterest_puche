@@ -14,6 +14,8 @@ import BottomTabs from './BottomTabs';
 import { AppStackParamList, AuthStackParamList } from './types';
 import { useApp } from '../context/AppContext';
 import { useTema } from '../theme/hooks';
+import EditarPerfilScreen from '../screens/EditarPerfilScreen';
+import TableroDetailScreen from '../screens/TableroDetailScreen';
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -51,6 +53,16 @@ function AppNavigator() {
         component={NotificacionesScreen}
         options={{ presentation: 'modal' }}
       />
+      <AppStack.Screen
+        name="EditarPerfil"
+        component={EditarPerfilScreen}
+        options={{ presentation: 'modal' }}
+      />
+      <AppStack.Screen
+        name="TableroDetail"
+        component={TableroDetailScreen}
+      />
+      
     </AppStack.Navigator>
   );
 }
