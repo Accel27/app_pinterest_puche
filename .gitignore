@@ -39,3 +39,14 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+# Android build
+android/app/build/
+android/app/.cxx/
+android/.gradle/
+android/build/
+android/local.properties
+
+# Keystores (NUNCA subir)
+*.keystore
+*.jks
+!debug.keystore
