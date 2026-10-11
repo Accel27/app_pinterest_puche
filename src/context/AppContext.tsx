@@ -1,0 +1,474 @@
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { Appearance, useColorScheme } from 'react-native';
+import * as SystemUI from 'expo-system-ui';
+
+import {
+  Categoria,
+  Comentario,
+  Configuracion,
+  Notificacion,
+  Pin,
+  Tablero,
+  Usuario,
+} from '../types';
+import { Tema, crearTema } from '../theme/tema';
+import { KEYS, escribir, leer } from '../storage/db';
+import { generarId } from '../utils/id';
+import { hashPassword } from '../utils/crypto';
+import { borrarImagen, copiarImagenAPins } from '../storage/imagenes';
+import { generarPinesSeed } from '../storage/seed';
+
+const CONFIG_DEFAULT: Configuracion = {
+  modoTema: 'sistema',
+  colorPrincipal: '#E60023',
+  usuarioActualId: null,
+};
+
+interface ResultadoAuth {
+  ok: boolean;
+  error?: string;
+}
+
+interface ContextoApp {
+  cargando: boolean;
+  usuarios: Usuario[];
+  pins: Pin[];
+  tableros: Tablero[];
+  comentarios: Comentario[];
+  notificaciones: Notificacion[];
+  configuracion: Configuracion;
+  usuarioActual: Usuario | null;
+  tema: Tema;
+  modoEfectivo: 'claro' | 'oscuro';
+
+  registrar: (nombreUsuario: string, email: string, password: string) => Promise<ResultadoAuth>;
+  login: (email: string, password: string) => Promise<ResultadoAuth>;
+  logout: () => Promise<void>;
+
+  crearPin: (datos: {
+    titulo: string;
+    descripcion: string;
+    categoria: Categoria;
+    tableroId: string | null;
+    imagenTemporal: string;
+  }) => Promise<Pin | null>;
+  eliminarPin: (pinId: string) => Promise<void>;
+  toggleLike: (pinId: string) => Promise<void>;
+
+  crearTablero: (nombre: string) => Promise<Tablero | null>;
+  eliminarTablero: (tableroId: string) => Promise<void>;
+  asignarPinATablero: (pinId: string, tableroId: string | null) => Promise<void>;
+
+  agregarComentario: (pinId: string, texto: string) => Promise<void>;
+  eliminarComentario: (comentarioId: string) => Promise<void>;
+
+  marcarNotificacionesLeidas: () => Promise<void>;
+
+  setModoTema: (modo: Configuracion['modoTema']) => Promise<void>;
+  setColorPrincipal: (color: string) => Promise<void>;
+
+  editarPerfil: (datos: {
+    passwordActual: string;
+    nombreUsuario?: string;
+    avatar?: string | null;
+    passwordNueva?: string;
+  }) => Promise<ResultadoAuth>;
+}
+
+const Contexto = createContext<ContextoApp | null>(null);
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [cargando, setCargando] = useState(true);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [pins, setPins] = useState<Pin[]>([]);
+  const [tableros, setTableros] = useState<Tablero[]>([]);
+  const [comentarios, setComentarios] = useState<Comentario[]>([]);
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
+  const [configuracion, setConfiguracion] = useState<Configuracion>(CONFIG_DEFAULT);
+
+  const sistemaScheme = useColorScheme();
+
+  const modoEfectivo: 'claro' | 'oscuro' = useMemo(() => {
+    if (configuracion.modoTema === 'sistema') {
+      return sistemaScheme === 'dark' ? 'oscuro' : 'claro';
+    }
+    return configuracion.modoTema;
+  }, [configuracion.modoTema, sistemaScheme]);
+
+  const tema = useMemo(
+    () => crearTema(modoEfectivo, configuracion.colorPrincipal),
+    [modoEfectivo, configuracion.colorPrincipal]
+  );
+
+  // Carga inicial (una sola vez)
+  useEffect(() => {
+    (async () => {
+      const [u, p, t, c, n, cfg, seedAplicado] = await Promise.all([
+        leer<Usuario[]>(KEYS.usuarios, []),
+        leer<Pin[]>(KEYS.pins, []),
+        leer<Tablero[]>(KEYS.tableros, []),
+        leer<Comentario[]>(KEYS.comentarios, []),
+        leer<Notificacion[]>(KEYS.notificaciones, []),
+        leer<Configuracion>(KEYS.configuracion, CONFIG_DEFAULT),
+        leer<boolean>(KEYS.seedAplicado, false),
+      ]);
+
+      let pinsFinales = p;
+      if (!seedAplicado) {
+        pinsFinales = [...generarPinesSeed(), ...p];
+        await escribir(KEYS.pins, pinsFinales);
+        await escribir(KEYS.seedAplicado, true);
+      }
+
+      setUsuarios(u);
+      setPins(pinsFinales);
+      setTableros(t);
+      setComentarios(c);
+      setNotificaciones(n);
+      setConfiguracion(cfg);
+      setCargando(false);
+    })();
+  }, []);
+
+  // Aplicar tema a nivel nativo (leccion 11 del proyecto anterior)
+    useEffect(() => {
+    if (cargando) return;
+    const modo = configuracion.modoTema;
+    // En SDK 57 la lib nativa NO acepta null, solo 'light' o 'dark'.
+    // Si el modo es 'sistema', no forzamos nada: useColorScheme() ya
+    // detecta el esquema del telefono por su cuenta.
+    if (modo !== 'sistema') {
+      Appearance.setColorScheme(modo === 'oscuro' ? 'dark' : 'claro');
+    }
+    const colorFondo = crearTema(modoEfectivo, configuracion.colorPrincipal).fondo;
+    SystemUI.setBackgroundColorAsync(colorFondo).catch(() => {});
+  }, [configuracion.modoTema, configuracion.colorPrincipal, modoEfectivo, cargando]);
+
+  // Helpers de persistencia (state + AsyncStorage juntos)
+  const guardarUsuarios = useCallback(async (lista: Usuario[]) => {
+    setUsuarios(lista);
+    await escribir(KEYS.usuarios, lista);
+  }, []);
+  const guardarPins = useCallback(async (lista: Pin[]) => {
+    setPins(lista);
+    await escribir(KEYS.pins, lista);
+  }, []);
+  const guardarTableros = useCallback(async (lista: Tablero[]) => {
+    setTableros(lista);
+    await escribir(KEYS.tableros, lista);
+  }, []);
+  const guardarComentarios = useCallback(async (lista: Comentario[]) => {
+    setComentarios(lista);
+    await escribir(KEYS.comentarios, lista);
+  }, []);
+  const guardarNotificaciones = useCallback(async (lista: Notificacion[]) => {
+    setNotificaciones(lista);
+    await escribir(KEYS.notificaciones, lista);
+  }, []);
+  const guardarConfiguracion = useCallback(async (cfg: Configuracion) => {
+    setConfiguracion(cfg);
+    await escribir(KEYS.configuracion, cfg);
+  }, []);
+
+  const usuarioActual = useMemo(
+    () => usuarios.find((u) => u.id === configuracion.usuarioActualId) ?? null,
+    [usuarios, configuracion.usuarioActualId]
+  );
+
+  // ---- AUTH ----
+  const registrar = useCallback<ContextoApp['registrar']>(
+    async (nombreUsuario, email, password) => {
+      const emailNorm = email.trim().toLowerCase();
+      if (usuarios.some((u) => u.email === emailNorm)) {
+        return { ok: false, error: 'Ese email ya está registrado' };
+      }
+      const nuevo: Usuario = {
+        id: generarId(),
+        nombreUsuario: nombreUsuario.trim(),
+        email: emailNorm,
+        passwordHash: await hashPassword(password),
+        avatar: null,
+        fechaRegistro: Date.now(),
+      };
+      await guardarUsuarios([...usuarios, nuevo]);
+      await guardarConfiguracion({ ...configuracion, usuarioActualId: nuevo.id });
+      return { ok: true };
+    },
+    [usuarios, configuracion, guardarUsuarios, guardarConfiguracion]
+  );
+
+  const login = useCallback<ContextoApp['login']>(
+    async (email, password) => {
+      const emailNorm = email.trim().toLowerCase();
+      const hash = await hashPassword(password);
+      const user = usuarios.find((u) => u.email === emailNorm);
+      if (!user || user.passwordHash !== hash) {
+        return { ok: false, error: 'Email o contraseña incorrectos' };
+      }
+      await guardarConfiguracion({ ...configuracion, usuarioActualId: user.id });
+      return { ok: true };
+    },
+    [usuarios, configuracion, guardarConfiguracion]
+  );
+
+  const logout = useCallback(async () => {
+    await guardarConfiguracion({ ...configuracion, usuarioActualId: null });
+  }, [configuracion, guardarConfiguracion]);
+
+  // ---- PINS ----
+  const crearPin = useCallback<ContextoApp['crearPin']>(
+    async ({ titulo, descripcion, categoria, tableroId, imagenTemporal }) => {
+      if (!usuarioActual) return null;
+      const id = generarId();
+      const rutaFinal = await copiarImagenAPins(imagenTemporal, id);
+      const nuevo: Pin = {
+        id,
+        titulo: titulo.trim(),
+        descripcion: descripcion.trim(),
+        imagen: rutaFinal,
+        esSeed: false,
+        autorId: usuarioActual.id,
+        categoria,
+        tableroId,
+        likes: [],
+        creadoEn: Date.now(),
+      };
+      await guardarPins([nuevo, ...pins]);
+      return nuevo;
+    },
+    [usuarioActual, pins, guardarPins]
+  );
+
+  const eliminarPin = useCallback(
+    async (pinId: string) => {
+      const pin = pins.find((p) => p.id === pinId);
+      if (!pin || !usuarioActual || pin.autorId !== usuarioActual.id) return;
+      if (!pin.esSeed) await borrarImagen(pin.imagen);
+      await guardarPins(pins.filter((p) => p.id !== pinId));
+      await guardarComentarios(comentarios.filter((c) => c.pinId !== pinId));
+      await guardarNotificaciones(notificaciones.filter((n) => n.pinId !== pinId));
+    },
+    [pins, comentarios, notificaciones, usuarioActual, guardarPins, guardarComentarios, guardarNotificaciones]
+  );
+
+  const toggleLike = useCallback(
+    async (pinId: string) => {
+      if (!usuarioActual) return;
+      const pin = pins.find((p) => p.id === pinId);
+      if (!pin) return;
+      const yaLikeado = pin.likes.includes(usuarioActual.id);
+      const likesNuevos = yaLikeado
+        ? pin.likes.filter((id) => id !== usuarioActual.id)
+        : [...pin.likes, usuarioActual.id];
+      await guardarPins(
+        pins.map((p) => (p.id === pinId ? { ...p, likes: likesNuevos } : p))
+      );
+      if (!yaLikeado && pin.autorId !== usuarioActual.id && pin.autorId !== 'seed-sistema') {
+        const notif: Notificacion = {
+          id: generarId(),
+          usuarioDestinoId: pin.autorId,
+          tipo: 'like',
+          pinId: pin.id,
+          usuarioOrigenId: usuarioActual.id,
+          leida: false,
+          creadoEn: Date.now(),
+        };
+        await guardarNotificaciones([notif, ...notificaciones]);
+      }
+    },
+    [usuarioActual, pins, notificaciones, guardarPins, guardarNotificaciones]
+  );
+
+  // ---- TABLEROS ----
+  const crearTablero = useCallback<ContextoApp['crearTablero']>(
+    async (nombre) => {
+      if (!usuarioActual) return null;
+      const nuevo: Tablero = {
+        id: generarId(),
+        nombre: nombre.trim(),
+        autorId: usuarioActual.id,
+        creadoEn: Date.now(),
+      };
+      await guardarTableros([nuevo, ...tableros]);
+      return nuevo;
+    },
+    [usuarioActual, tableros, guardarTableros]
+  );
+
+  const eliminarTablero = useCallback(
+    async (tableroId: string) => {
+      if (!usuarioActual) return;
+      const tab = tableros.find((t) => t.id === tableroId);
+      if (!tab || tab.autorId !== usuarioActual.id) return;
+      await guardarTableros(tableros.filter((t) => t.id !== tableroId));
+      await guardarPins(
+        pins.map((p) => (p.tableroId === tableroId ? { ...p, tableroId: null } : p))
+      );
+    },
+    [usuarioActual, tableros, pins, guardarTableros, guardarPins]
+  );
+
+  const asignarPinATablero = useCallback(
+    async (pinId: string, tableroId: string | null) => {
+      if (!usuarioActual) return;
+      const pin = pins.find((p) => p.id === pinId);
+      if (!pin) return;
+      await guardarPins(pins.map((p) => (p.id === pinId ? { ...p, tableroId } : p)));
+      if (tableroId && pin.autorId !== usuarioActual.id && pin.autorId !== 'seed-sistema') {
+        const notif: Notificacion = {
+          id: generarId(),
+          usuarioDestinoId: pin.autorId,
+          tipo: 'guardado',
+          pinId: pin.id,
+          usuarioOrigenId: usuarioActual.id,
+          leida: false,
+          creadoEn: Date.now(),
+        };
+        await guardarNotificaciones([notif, ...notificaciones]);
+      }
+    },
+    [usuarioActual, pins, notificaciones, guardarPins, guardarNotificaciones]
+  );
+
+  // ---- COMENTARIOS ----
+  const agregarComentario = useCallback(
+    async (pinId: string, texto: string) => {
+      if (!usuarioActual || !texto.trim()) return;
+      const comentario: Comentario = {
+        id: generarId(),
+        pinId,
+        autorId: usuarioActual.id,
+        texto: texto.trim(),
+        creadoEn: Date.now(),
+      };
+      await guardarComentarios([comentario, ...comentarios]);
+      const pin = pins.find((p) => p.id === pinId);
+      if (pin && pin.autorId !== usuarioActual.id && pin.autorId !== 'seed-sistema') {
+        const notif: Notificacion = {
+          id: generarId(),
+          usuarioDestinoId: pin.autorId,
+          tipo: 'comentario',
+          pinId,
+          usuarioOrigenId: usuarioActual.id,
+          leida: false,
+          creadoEn: Date.now(),
+        };
+        await guardarNotificaciones([notif, ...notificaciones]);
+      }
+    },
+    [usuarioActual, pins, comentarios, notificaciones, guardarComentarios, guardarNotificaciones]
+  );
+
+  const eliminarComentario = useCallback(
+    async (comentarioId: string) => {
+      if (!usuarioActual) return;
+      const c = comentarios.find((x) => x.id === comentarioId);
+      if (!c || c.autorId !== usuarioActual.id) return;
+      await guardarComentarios(comentarios.filter((x) => x.id !== comentarioId));
+    },
+    [usuarioActual, comentarios, guardarComentarios]
+  );
+
+  // ---- NOTIFICACIONES ----
+  const marcarNotificacionesLeidas = useCallback(async () => {
+    if (!usuarioActual) return;
+    await guardarNotificaciones(
+      notificaciones.map((n) =>
+        n.usuarioDestinoId === usuarioActual.id ? { ...n, leida: true } : n
+      )
+    );
+  }, [usuarioActual, notificaciones, guardarNotificaciones]);
+
+  // ---- CONFIG ----
+  const setModoTema = useCallback(
+    async (modo: Configuracion['modoTema']) => {
+      await guardarConfiguracion({ ...configuracion, modoTema: modo });
+    },
+    [configuracion, guardarConfiguracion]
+  );
+
+  const setColorPrincipal = useCallback(
+    async (color: string) => {
+      await guardarConfiguracion({ ...configuracion, colorPrincipal: color });
+    },
+    [configuracion, guardarConfiguracion]
+  );
+
+  // ---- PERFIL ----
+  const editarPerfil = useCallback<ContextoApp['editarPerfil']>(
+    async ({ passwordActual, nombreUsuario, avatar, passwordNueva }) => {
+      if (!usuarioActual) return { ok: false, error: 'No hay sesión activa' };
+      const hashActual = await hashPassword(passwordActual);
+      if (hashActual !== usuarioActual.passwordHash) {
+        return { ok: false, error: 'La contraseña actual no coincide' };
+      }
+      const actualizado: Usuario = {
+        ...usuarioActual,
+        nombreUsuario: nombreUsuario?.trim() || usuarioActual.nombreUsuario,
+        avatar: avatar !== undefined ? avatar : usuarioActual.avatar,
+        passwordHash: passwordNueva
+          ? await hashPassword(passwordNueva)
+          : usuarioActual.passwordHash,
+      };
+      await guardarUsuarios(
+        usuarios.map((u) => (u.id === actualizado.id ? actualizado : u))
+      );
+      return { ok: true };
+    },
+    [usuarioActual, usuarios, guardarUsuarios]
+  );
+
+  const valor = useMemo<ContextoApp>(
+    () => ({
+      cargando,
+      usuarios,
+      pins,
+      tableros,
+      comentarios,
+      notificaciones,
+      configuracion,
+      usuarioActual,
+      tema,
+      modoEfectivo,
+      registrar,
+      login,
+      logout,
+      crearPin,
+      eliminarPin,
+      toggleLike,
+      crearTablero,
+      eliminarTablero,
+      asignarPinATablero,
+      agregarComentario,
+      eliminarComentario,
+      marcarNotificacionesLeidas,
+      setModoTema,
+      setColorPrincipal,
+      editarPerfil,
+    }),
+    [
+      cargando, usuarios, pins, tableros, comentarios, notificaciones,
+      configuracion, usuarioActual, tema, modoEfectivo,
+      registrar, login, logout,
+      crearPin, eliminarPin, toggleLike,
+      crearTablero, eliminarTablero, asignarPinATablero,
+      agregarComentario, eliminarComentario, marcarNotificacionesLeidas,
+      setModoTema, setColorPrincipal, editarPerfil,
+    ]
+  );
+
+  return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
+}
+
+export function useApp(): ContextoApp {
+  const ctx = useContext(Contexto);
+  if (!ctx) throw new Error('useApp debe usarse dentro de AppProvider');
+  return ctx;
+}
