@@ -104,7 +104,7 @@ export default function AddPinScreen({ navigation }: AppScreenProps<'AddPin'>) {
 
   async function publicar() {
     if (!imagen) {
-      Alert.alert('Falta imagen', 'Elegí o tomá una foto primero.');
+      Alert.alert('Falta imagen', 'Elige o toma una foto primero.');
       return;
     }
     const limpio = titulo.trim();
@@ -201,7 +201,7 @@ export default function AddPinScreen({ navigation }: AppScreenProps<'AddPin'>) {
               <Ionicons name="image-outline" size={54} color={tema.textoSuave} />
               <Text style={estilos.placeholderTitulo}>Añade una imagen</Text>
               <Text style={estilos.placeholderTexto}>
-                Elegí una foto de tu galería o tomá una nueva
+                Elige una foto de tu galería o toma una nueva
               </Text>
               <View style={estilos.botonesImagen}>
                 <Pressable
@@ -251,7 +251,7 @@ export default function AddPinScreen({ navigation }: AppScreenProps<'AddPin'>) {
             style={[estilos.input, estilos.textarea]}
             value={descripcion}
             onChangeText={setDescripcion}
-            placeholder="Contá algo sobre este pin (opcional)"
+            placeholder="Cuenta algo sobre este pin (opcional)"
             placeholderTextColor={tema.textoSuave}
             multiline
             numberOfLines={4}

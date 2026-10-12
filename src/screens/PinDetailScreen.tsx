@@ -268,7 +268,20 @@ export default function PinDetailScreen({
                   comentario={c}
                   autor={usuarios.find((u) => u.id === c.autorId)}
                   puedeEliminar={c.autorId === usuarioActual?.id}
-                  onEliminar={() => eliminarComentario(c.id)}
+                  onEliminar={() =>
+                    Alert.alert(
+                      'Eliminar comentario',
+                      '¿Seguro que quieres eliminar este comentario?',
+                      [
+                        { text: 'Cancelar', style: 'cancel' },
+                        {
+                          text: 'Eliminar',
+                          style: 'destructive',
+                          onPress: () => eliminarComentario(c.id),
+                        },
+                      ]
+                    )
+                  }
                 />
               ))
             )}

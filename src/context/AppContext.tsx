@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { Appearance, useColorScheme } from 'react-native';
+import { useColorScheme } from 'react-native';
 import * as SystemUI from 'expo-system-ui';
 
 import {
@@ -154,18 +154,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Aplicar tema a nivel nativo (leccion 11 del proyecto anterior)
-    useEffect(() => {
+  useEffect(() => {
     if (cargando) return;
-    const modo = configuracion.modoTema;
-    // En SDK 57 la lib nativa NO acepta null, solo 'light' o 'dark'.
-    // Si el modo es 'sistema', no forzamos nada: useColorScheme() ya
-    // detecta el esquema del telefono por su cuenta.
-    if (modo !== 'sistema') {
-      Appearance.setColorScheme(modo === 'oscuro' ? 'dark' : 'claro');
-    }
+    // NO llamamos a Appearance.setColorScheme: eso sobreescribe el modo
+    // del sistema de forma permanente y rompe la opcion "Sistema".
+    // El fondo nativo lo manejamos solo con SystemUI.
     const colorFondo = crearTema(modoEfectivo, configuracion.colorPrincipal).fondo;
     SystemUI.setBackgroundColorAsync(colorFondo).catch(() => {});
-  }, [configuracion.modoTema, configuracion.colorPrincipal, modoEfectivo, cargando]);
+  }, [configuracion.colorPrincipal, modoEfectivo, cargando]);
 
   // Helpers de persistencia (state + AsyncStorage juntos)
   const guardarUsuarios = useCallback(async (lista: Usuario[]) => {

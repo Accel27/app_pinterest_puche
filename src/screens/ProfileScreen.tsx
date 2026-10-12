@@ -183,6 +183,16 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'Profile'>)
 
         {tab === 'tableros' && (
           <View style={estilos.tablerosWrapper}>
+            <Pressable
+              onPress={() => navigation.navigate('CreateBoard')}
+              style={[estilos.botonNuevoTablero, { backgroundColor: tema.primario }]}
+            >
+              <Ionicons name="add" size={20} color={tema.textoInverso} />
+              <Text style={[estilos.botonNuevoTableroTexto, { color: tema.textoInverso }]}>
+                Crear tablero nuevo
+              </Text>
+            </Pressable>
+
             {misTableros.length === 0 ? (
               <View style={estilos.vacio}>
                 <Ionicons name="albums-outline" size={54} color={tema.textoSuave} />
@@ -393,5 +403,15 @@ function crearEstilos(tema: Tema) {
       borderWidth: 1,
     },
     botonLogoutTexto: { fontSize: 14, fontWeight: '700' },
+      botonNuevoTablero: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      paddingVertical: 14,
+      borderRadius: 12,
+      marginBottom: 16,
+    },
+    botonNuevoTableroTexto: { fontSize: 14, fontWeight: '700' },
   });
 }

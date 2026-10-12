@@ -102,7 +102,7 @@ export default function RegisterScreen({ navigation }: AuthScreenProps<'Register
           <View style={estilos.formulario}>
             <CampoTexto
               label="Nombre de usuario"
-              placeholder="tu_nombre"
+              placeholder="Ejemplo: usuario25"
               value={nombre}
               onChangeText={(t) => {
                 setNombre(t);

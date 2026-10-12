@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -64,148 +66,156 @@ export default function ModalSelectorTablero({
       animationType="slide"
       onRequestClose={cerrar}
     >
-      <Pressable style={estilos.fondo} onPress={cerrar}>
-        <Pressable style={estilos.hoja} onPress={() => {}}>
-          <View style={estilos.manija} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={estilos.kav}
+      >
+        <Pressable style={estilos.fondo} onPress={cerrar}>
+          <Pressable style={estilos.hoja} onPress={() => {}}>
+            <View style={estilos.manija} />
 
-          <View style={estilos.encabezado}>
-            <Text style={estilos.titulo}>
-              {modoCrear ? 'Nuevo tablero' : titulo}
-            </Text>
-            <Pressable onPress={cerrar} hitSlop={8}>
-              <Ionicons name="close" size={24} color={tema.texto} />
-            </Pressable>
-          </View>
-
-          {modoCrear ? (
-            <View style={estilos.crearWrapper}>
-              <TextInput
-                style={estilos.input}
-                value={nombre}
-                onChangeText={setNombre}
-                placeholder="Nombre del tablero"
-                placeholderTextColor={tema.textoSuave}
-                autoFocus
-                maxLength={40}
-                onSubmitEditing={crear}
-              />
-              <View style={estilos.botonesCrear}>
-                <Pressable
-                  onPress={() => {
-                    setModoCrear(false);
-                    setNombre('');
-                  }}
-                  style={[estilos.botonCrear, { backgroundColor: tema.superficie }]}
-                >
-                  <Text style={[estilos.botonCrearTexto, { color: tema.texto }]}>
-                    Cancelar
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={crear}
-                  disabled={!nombre.trim() || creando}
-                  style={[
-                    estilos.botonCrear,
-                    {
-                      backgroundColor: nombre.trim()
-                        ? tema.primario
-                        : tema.superficieAlt,
-                    },
-                  ]}
-                >
-                  {creando ? (
-                    <ActivityIndicator size="small" color={tema.textoInverso} />
-                  ) : (
-                    <Text
-                      style={[
-                        estilos.botonCrearTexto,
-                        {
-                          color: nombre.trim() ? tema.textoInverso : tema.textoSuave,
-                        },
-                      ]}
-                    >
-                      Crear
-                    </Text>
-                  )}
-                </Pressable>
-              </View>
-            </View>
-          ) : (
-            <>
-              <ScrollView
-                style={{ maxHeight: 340 }}
-                showsVerticalScrollIndicator={false}
-              >
-                {tableros.length === 0 ? (
-                  <View style={estilos.vacio}>
-                    <Ionicons name="albums-outline" size={36} color={tema.textoSuave} />
-                    <Text style={estilos.vacioTexto}>
-                      Todavía no tienes tableros
-                    </Text>
-                  </View>
-                ) : (
-                  tableros.map((t) => {
-                    const activo = t.id === tableroActualId;
-                    return (
-                      <Pressable
-                        key={t.id}
-                        onPress={() => onSeleccionar(t.id)}
-                        style={estilos.fila}
-                      >
-                        <View
-                          style={[
-                            estilos.iconoFila,
-                            { backgroundColor: tema.superficieAlt },
-                          ]}
-                        >
-                          <Ionicons name="albums" size={20} color={tema.primario} />
-                        </View>
-                        <Text style={estilos.nombreTablero} numberOfLines={1}>
-                          {t.nombre}
-                        </Text>
-                        {activo && (
-                          <Ionicons
-                            name="checkmark-circle"
-                            size={22}
-                            color={tema.primario}
-                          />
-                        )}
-                      </Pressable>
-                    );
-                  })
-                )}
-              </ScrollView>
-
-              <Pressable
-                onPress={() => setModoCrear(true)}
-                style={[estilos.botonNuevo, { borderTopColor: tema.borde }]}
-              >
-                <Ionicons name="add-circle-outline" size={22} color={tema.primario} />
-                <Text style={[estilos.botonNuevoTexto, { color: tema.primario }]}>
-                  Crear tablero nuevo
-                </Text>
+            <View style={estilos.encabezado}>
+              <Text style={estilos.titulo}>
+                {modoCrear ? 'Nuevo tablero' : titulo}
+              </Text>
+              <Pressable onPress={cerrar} hitSlop={8}>
+                <Ionicons name="close" size={24} color={tema.texto} />
               </Pressable>
+            </View>
 
-              {tableroActualId && (
-                <Pressable
-                  onPress={() => onSeleccionar(null)}
-                  style={estilos.botonQuitar}
+            {modoCrear ? (
+              <View style={estilos.crearWrapper}>
+                <TextInput
+                  style={estilos.input}
+                  value={nombre}
+                  onChangeText={setNombre}
+                  placeholder="Nombre del tablero"
+                  placeholderTextColor={tema.textoSuave}
+                  selectionColor={tema.primario}
+                  cursorColor={tema.primario}
+                  autoFocus
+                  maxLength={40}
+                  onSubmitEditing={crear}
+                />
+                <View style={estilos.botonesCrear}>
+                  <Pressable
+                    onPress={() => {
+                      setModoCrear(false);
+                      setNombre('');
+                    }}
+                    style={[estilos.botonCrear, { backgroundColor: tema.superficie }]}
+                  >
+                    <Text style={[estilos.botonCrearTexto, { color: tema.texto }]}>
+                      Cancelar
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={crear}
+                    disabled={!nombre.trim() || creando}
+                    style={[
+                      estilos.botonCrear,
+                      {
+                        backgroundColor: nombre.trim()
+                          ? tema.primario
+                          : tema.superficieAlt,
+                      },
+                    ]}
+                  >
+                    {creando ? (
+                      <ActivityIndicator size="small" color={tema.textoInverso} />
+                    ) : (
+                      <Text
+                        style={[
+                          estilos.botonCrearTexto,
+                          {
+                            color: nombre.trim() ? tema.textoInverso : tema.textoSuave,
+                          },
+                        ]}
+                      >
+                        Crear
+                      </Text>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <>
+                <ScrollView
+                  style={{ maxHeight: 340 }}
+                  showsVerticalScrollIndicator={false}
                 >
-                  <Text style={[estilos.botonQuitarTexto, { color: tema.peligro }]}>
-                    Quitar del tablero
+                  {tableros.length === 0 ? (
+                    <View style={estilos.vacio}>
+                      <Ionicons name="albums-outline" size={36} color={tema.textoSuave} />
+                      <Text style={estilos.vacioTexto}>
+                        Todavía no tienes tableros
+                      </Text>
+                    </View>
+                  ) : (
+                    tableros.map((t) => {
+                      const activo = t.id === tableroActualId;
+                      return (
+                        <Pressable
+                          key={t.id}
+                          onPress={() => onSeleccionar(t.id)}
+                          style={estilos.fila}
+                        >
+                          <View
+                            style={[
+                              estilos.iconoFila,
+                              { backgroundColor: tema.superficieAlt },
+                            ]}
+                          >
+                            <Ionicons name="albums" size={20} color={tema.primario} />
+                          </View>
+                          <Text style={estilos.nombreTablero} numberOfLines={1}>
+                            {t.nombre}
+                          </Text>
+                          {activo && (
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={22}
+                              color={tema.primario}
+                            />
+                          )}
+                        </Pressable>
+                      );
+                    })
+                  )}
+                </ScrollView>
+
+                <Pressable
+                  onPress={() => setModoCrear(true)}
+                  style={[estilos.botonNuevo, { borderTopColor: tema.borde }]}
+                >
+                  <Ionicons name="add-circle-outline" size={22} color={tema.primario} />
+                  <Text style={[estilos.botonNuevoTexto, { color: tema.primario }]}>
+                    Crear tablero nuevo
                   </Text>
                 </Pressable>
-              )}
-            </>
-          )}
+
+                {tableroActualId && (
+                  <Pressable
+                    onPress={() => onSeleccionar(null)}
+                    style={estilos.botonQuitar}
+                  >
+                    <Text style={[estilos.botonQuitarTexto, { color: tema.peligro }]}>
+                      Quitar del tablero
+                    </Text>
+                  </Pressable>
+                )}
+              </>
+            )}
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 function crearEstilos(tema: Tema) {
   return StyleSheet.create({
+    kav: { flex: 1 },
     fondo: {
       flex: 1,
       backgroundColor: 'rgba(0,0,0,0.5)',
