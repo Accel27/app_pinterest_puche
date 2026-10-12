@@ -15,6 +15,7 @@ export type AppStackParamList = {
   Notificaciones: undefined;
   EditarPerfil: undefined;
   TableroDetail: { tableroId: string };
+  Ajustes: undefined;
 };
 
 export type TabParamList = {

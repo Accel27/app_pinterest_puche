@@ -67,7 +67,7 @@ export default function HomeScreen({ navigation }: TabScreenProps<'Home'>) {
   return (
     <SafeAreaView style={estilos.contenedor} edges={['top']}>
       <View style={estilos.header}>
-        <Text style={estilos.marca}>Pinterest</Text>
+        <Text style={estilos.marca}>Tinterest</Text>
         <Pressable
           onPress={() => navigation.navigate('Notificaciones')}
           hitSlop={10}
@@ -206,7 +206,7 @@ function crearEstilos(tema: Tema) {
     botonLimpiar: { marginTop: 12, padding: 10 },
     botonLimpiarTexto: { fontSize: 14, fontWeight: '700' },
 
-    fab: {
+        fab: {
       position: 'absolute',
       bottom: 24,
       right: 20,

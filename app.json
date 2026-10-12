@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Pinterest",
-    "slug": "app_pinterest",
+    "name": "Tinterest",
+    "slug": "tinterest",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,7 +19,7 @@
       "userInterfaceStyle": "automatic"
     },
     "android": {
-      "package": "com.carlospuche.pinterest",
+      "package": "com.puche.tinterest",
       "userInterfaceStyle": "automatic",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

@@ -6,6 +6,7 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import AjustesScreen from '../screens/AjustesScreen';
 import PinDetailScreen from '../screens/PinDetailScreen';
 import AddPinScreen from '../screens/AddPinScreen';
 import CreateBoardScreen from '../screens/CreateBoardScreen';
@@ -61,6 +62,11 @@ function AppNavigator() {
       <AppStack.Screen
         name="TableroDetail"
         component={TableroDetailScreen}
+      />
+      <AppStack.Screen
+        name="Ajustes"
+        component={AjustesScreen}
+        options={{ presentation: 'modal' }}
       />
       
     </AppStack.Navigator>

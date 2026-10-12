@@ -57,14 +57,70 @@ export function generarPinesSeed(): Pin[] {
     imagen: string;
     aspectRatio: number;
   }[] = [
-    { titulo: 'Retrato anime', descripcion: 'Ilustración de personaje anime', categoria: 'Anime', imagen: 'seed:pin1', aspectRatio: 0.6 },
-    { titulo: 'Personaje violeta', descripcion: 'Fan art con detalles morados', categoria: 'Anime', imagen: 'seed:pin2', aspectRatio: 0.7 },
-    { titulo: 'Playa al atardecer', descripcion: 'Vista del mar al atardecer', categoria: 'Viajes', imagen: 'seed:pin3', aspectRatio: 1.15 },
-    { titulo: 'Outfit casual', descripcion: 'Combinación urbana de temporada', categoria: 'Moda', imagen: 'seed:pin4', aspectRatio: 0.75 },
-    { titulo: 'Setup gamer', descripcion: 'Escritorio con luces LED', categoria: 'Gaming', imagen: 'seed:pin5', aspectRatio: 1.0 },
-    { titulo: 'Build de personaje', descripcion: 'Stats y armas para el endgame', categoria: 'Gaming', imagen: 'seed:pin6', aspectRatio: 0.85 },
-    { titulo: 'Concierto en vivo', descripcion: 'Banda tocando en un estadio', categoria: 'Musica', imagen: 'seed:pin7', aspectRatio: 1.1 },
-    { titulo: 'Bosque nevado', descripcion: 'Paisaje natural con nieve', categoria: 'Naturaleza', imagen: 'seed:pin8', aspectRatio: 0.65 },
+    {
+      titulo: 'Curadora de hardware',
+      descripcion:
+        'Mi gata supervisando que la CPU no se sobrecaliente. Nadie toca su trono.',
+      categoria: 'Arte',
+      imagen: 'seed:pin1',
+      aspectRatio: 0.46,
+    },
+    {
+      titulo: 'Pizza de vegetales',
+      descripcion:
+        'Con maíz, champiñones, pimentón y mucho queso. Recién salida del horno.',
+      categoria: 'Comida',
+      imagen: 'seed:pin2',
+      aspectRatio: 0.66,
+    },
+    {
+      titulo: 'Médanos de Coro',
+      descripcion:
+        'Venezuela también tiene desierto. Falcón esconde dunas doradas que parecen de otro planeta.',
+      categoria: 'Viajes',
+      imagen: 'seed:pin3',
+      aspectRatio: 1.5,
+    },
+    {
+      titulo: 'Accelerator',
+      descripcion:
+        'El esper más poderoso de Ciudad Academia. De "To Aru Majutsu no Index".',
+      categoria: 'Anime',
+      imagen: 'seed:pin4',
+      aspectRatio: 1.17,
+    },
+    {
+      titulo: 'Aventurera de Blue Protocol',
+      descripcion:
+        'Stats de mi personaje cuando jugaba Blue Protocol. Build de F2P, jugada al día, y aun así llegaba a contenido endgame.',
+      categoria: 'Gaming',
+      imagen: 'seed:pin5',
+      aspectRatio: 1.78,
+    },
+    {
+      titulo: 'Carlotta arrasando',
+      descripcion:
+        '332985 de daño con la ulti. La Torre de la Adversidad no vio venir esa.',
+      categoria: 'Gaming',
+      imagen: 'seed:pin6',
+      aspectRatio: 1.91,
+    },
+    {
+      titulo: 'Setup Razer',
+      descripcion:
+        'Luces RGB, triple monitor y silla gamer. El rendimiento se mide en fps, pero la estética en vatios de luz.',
+      categoria: 'Tecnologia',
+      imagen: 'seed:pin7',
+      aspectRatio: 1.5,
+    },
+    {
+      titulo: 'Hatsune Miku',
+      descripcion:
+        'La vocaloid más famosa del mundo, rodeada de pantallas y cables en este fan art.',
+      categoria: 'Musica',
+      imagen: 'seed:pin8',
+      aspectRatio: 0.61,
+    },
   ];
 
   return datos.map((d, i) => ({

@@ -125,12 +125,12 @@ export default function ProfileScreen({ navigation }: TabScreenProps<'Profile'>)
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => navigation.navigate('CreateBoard')}
+              onPress={() => navigation.navigate('Ajustes')}
               style={[estilos.botonPerfil, { backgroundColor: tema.superficie }]}
             >
-              <Ionicons name="add" size={20} color={tema.texto} />
+              <Ionicons name="settings-outline" size={18} color={tema.texto} />
               <Text style={[estilos.botonPerfilTexto, { color: tema.texto }]}>
-                Nuevo tablero
+                Ajustes
               </Text>
             </Pressable>
           </View>
@@ -303,17 +303,19 @@ function crearEstilos(tema: Tema) {
       marginTop: 12,
     },
     email: { color: tema.textoSuave, fontSize: 13, marginTop: 2 },
-    botonesPerfil: {
+        botonesPerfil: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: 10,
       marginTop: 16,
       marginBottom: 20,
+      justifyContent: 'center',
     },
     botonPerfil: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
       paddingVertical: 10,
       borderRadius: 22,
     },

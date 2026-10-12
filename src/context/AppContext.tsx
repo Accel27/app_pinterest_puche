@@ -31,6 +31,8 @@ const CONFIG_DEFAULT: Configuracion = {
   usuarioActualId: null,
 };
 
+const COLOR_DEFAULT = '#E60023';
+
 interface ResultadoAuth {
   ok: boolean;
   error?: string;
@@ -104,9 +106,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return configuracion.modoTema;
   }, [configuracion.modoTema, sistemaScheme]);
 
+    const usuarioActual = useMemo(
+    () => usuarios.find((u) => u.id === configuracion.usuarioActualId) ?? null,
+    [usuarios, configuracion.usuarioActualId]
+    );
+    
+  // El color del tema sale del usuario actual si hay sesion.
+  // Si no hay usuario (Login/Register), usa el global.
+  const colorEfectivo = usuarioActual?.colorPrincipal ?? configuracion.colorPrincipal;
+
   const tema = useMemo(
-    () => crearTema(modoEfectivo, configuracion.colorPrincipal),
-    [modoEfectivo, configuracion.colorPrincipal]
+    () => crearTema(modoEfectivo, colorEfectivo),
+    [modoEfectivo, colorEfectivo]
   );
 
   // Carga inicial (una sola vez)
@@ -177,15 +188,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotificaciones(lista);
     await escribir(KEYS.notificaciones, lista);
   }, []);
+  // Crea o actualiza una notificacion. Evita duplicados cuando el mismo
+  // usuario repite la misma accion sobre el mismo pin.
+  const upsertNotificacion = useCallback(
+    async (
+      tipo: Notificacion['tipo'],
+      pinId: string,
+      usuarioDestinoId: string,
+      usuarioOrigenId: string
+    ) => {
+      const existente = notificaciones.find(
+        (n) =>
+          n.tipo === tipo &&
+          n.pinId === pinId &&
+          n.usuarioDestinoId === usuarioDestinoId &&
+          n.usuarioOrigenId === usuarioOrigenId
+      );
+
+      if (existente) {
+        const actualizada: Notificacion = {
+          ...existente,
+          leida: false,
+          creadoEn: Date.now(),
+        };
+        await guardarNotificaciones(
+          notificaciones.map((n) => (n.id === existente.id ? actualizada : n))
+        );
+      } else {
+        const nueva: Notificacion = {
+          id: generarId(),
+          usuarioDestinoId,
+          tipo,
+          pinId,
+          usuarioOrigenId,
+          leida: false,
+          creadoEn: Date.now(),
+        };
+        await guardarNotificaciones([nueva, ...notificaciones]);
+      }
+    },
+    [notificaciones, guardarNotificaciones]
+  );
   const guardarConfiguracion = useCallback(async (cfg: Configuracion) => {
     setConfiguracion(cfg);
     await escribir(KEYS.configuracion, cfg);
   }, []);
 
-  const usuarioActual = useMemo(
-    () => usuarios.find((u) => u.id === configuracion.usuarioActualId) ?? null,
-    [usuarios, configuracion.usuarioActualId]
-  );
+
 
   // ---- AUTH ----
   const registrar = useCallback<ContextoApp['registrar']>(
@@ -194,16 +243,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (usuarios.some((u) => u.email === emailNorm)) {
         return { ok: false, error: 'Ese email ya está registrado' };
       }
-      const nuevo: Usuario = {
+        const nuevo: Usuario = {
         id: generarId(),
         nombreUsuario: nombreUsuario.trim(),
         email: emailNorm,
         passwordHash: await hashPassword(password),
         avatar: null,
         fechaRegistro: Date.now(),
+        colorPrincipal: COLOR_DEFAULT,
       };
       await guardarUsuarios([...usuarios, nuevo]);
-      await guardarConfiguracion({ ...configuracion, usuarioActualId: nuevo.id });
+      await guardarConfiguracion({
+        ...configuracion,
+        usuarioActualId: nuevo.id,
+        colorPrincipal: COLOR_DEFAULT,
+      });
       return { ok: true };
     },
     [usuarios, configuracion, guardarUsuarios, guardarConfiguracion]
@@ -217,14 +271,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!user || user.passwordHash !== hash) {
         return { ok: false, error: 'Email o contraseña incorrectos' };
       }
-      await guardarConfiguracion({ ...configuracion, usuarioActualId: user.id });
+      await guardarConfiguracion({
+        ...configuracion,
+        usuarioActualId: user.id,
+        colorPrincipal: user.colorPrincipal ?? COLOR_DEFAULT,
+      });
       return { ok: true };
     },
     [usuarios, configuracion, guardarConfiguracion]
   );
 
   const logout = useCallback(async () => {
-    await guardarConfiguracion({ ...configuracion, usuarioActualId: null });
+    await guardarConfiguracion({
+      ...configuracion,
+      usuarioActualId: null,
+      colorPrincipal: COLOR_DEFAULT,
+    });
   }, [configuracion, guardarConfiguracion]);
 
   // ---- PINS ----
@@ -287,20 +349,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await guardarPins(
         pins.map((p) => (p.id === pinId ? { ...p, likes: likesNuevos } : p))
       );
-      if (!yaLikeado && pin.autorId !== usuarioActual.id && pin.autorId !== 'seed-sistema') {
-        const notif: Notificacion = {
-          id: generarId(),
-          usuarioDestinoId: pin.autorId,
-          tipo: 'like',
-          pinId: pin.id,
-          usuarioOrigenId: usuarioActual.id,
-          leida: false,
-          creadoEn: Date.now(),
-        };
-        await guardarNotificaciones([notif, ...notificaciones]);
+        if (!yaLikeado && pin.autorId !== usuarioActual.id && pin.autorId !== 'seed-sistema') {
+        await upsertNotificacion('like', pin.id, pin.autorId, usuarioActual.id);
       }
     },
-    [usuarioActual, pins, notificaciones, guardarPins, guardarNotificaciones]
+      [usuarioActual, pins, guardarPins, upsertNotificacion]
   );
 
   // ---- TABLEROS ----
@@ -339,19 +392,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!pin) return;
       await guardarPins(pins.map((p) => (p.id === pinId ? { ...p, tableroId } : p)));
       if (tableroId && pin.autorId !== usuarioActual.id && pin.autorId !== 'seed-sistema') {
-        const notif: Notificacion = {
-          id: generarId(),
-          usuarioDestinoId: pin.autorId,
-          tipo: 'guardado',
-          pinId: pin.id,
-          usuarioOrigenId: usuarioActual.id,
-          leida: false,
-          creadoEn: Date.now(),
-        };
-        await guardarNotificaciones([notif, ...notificaciones]);
+        await upsertNotificacion('guardado', pin.id, pin.autorId, usuarioActual.id);
       }
     },
-    [usuarioActual, pins, notificaciones, guardarPins, guardarNotificaciones]
+      [usuarioActual, pins, guardarPins, upsertNotificacion]
   );
 
   // ---- COMENTARIOS ----
@@ -413,9 +457,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setColorPrincipal = useCallback(
     async (color: string) => {
+      if (!usuarioActual) {
+        await guardarConfiguracion({ ...configuracion, colorPrincipal: color });
+        return;
+      }
+      const usuarioActualizado: Usuario = { ...usuarioActual, colorPrincipal: color };
+      await guardarUsuarios(
+        usuarios.map((u) => (u.id === usuarioActual.id ? usuarioActualizado : u))
+      );
       await guardarConfiguracion({ ...configuracion, colorPrincipal: color });
     },
-    [configuracion, guardarConfiguracion]
+    [usuarioActual, usuarios, configuracion, guardarUsuarios, guardarConfiguracion]
   );
 
   // ---- PERFIL ----

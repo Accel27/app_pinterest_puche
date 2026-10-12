@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -59,10 +60,12 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
           showsVerticalScrollIndicator={false}
         >
           <View style={estilos.logoContenedor}>
-            <View style={[estilos.logoCirculo, { backgroundColor: tema.primario }]}>
-              <Ionicons name="pin" size={40} color={tema.textoInverso} />
-            </View>
-            <Text style={estilos.titulo}>Bienvenido a Pinterest</Text>
+          <Image
+            source={require('../../assets/images/logo.png')}
+            style={estilos.logoCirculo}
+            resizeMode="contain"
+          />
+            <Text style={estilos.titulo}>Bienvenido a Tinterest</Text>
             <Text style={estilos.subtitulo}>Encuentra ideas para tu día a día</Text>
           </View>
 
@@ -131,8 +134,8 @@ function crearEstilos(tema: Tema) {
     scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 24 },
     logoContenedor: { alignItems: 'center', marginTop: 40, marginBottom: 32 },
     logoCirculo: {
-      width: 80,
-      height: 80,
+      width: 125,
+      height: 125,
       borderRadius: 40,
       alignItems: 'center',
       justifyContent: 'center',

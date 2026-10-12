@@ -19,6 +19,7 @@ export interface Usuario {
   passwordHash: string;
   avatar: string | null;
   fechaRegistro: number;
+  colorPrincipal?: string;
 }
 
 export interface Pin {

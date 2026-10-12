@@ -41,7 +41,7 @@ export default function PinCard({ pin, ancho, onPress }: Props) {
     () => usuarios.find((u) => u.id === pin.autorId),
     [usuarios, pin.autorId]
   );
-  const nombreAutor = autor?.nombreUsuario ?? 'Pinterest';
+  const nombreAutor = autor?.nombreUsuario ?? 'Tinterest';
 
   return (
     <Pressable style={estilos.contenedor} onPress={onPress}>
